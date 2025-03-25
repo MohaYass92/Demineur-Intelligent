@@ -1,7 +1,7 @@
 import sys
 import random
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QMessageBox, QVBoxLayout
-from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout, QMessageBox, QVBoxLayout, QLabel
+from PyQt6.QtCore import Qt, QTimer
 
 class Demineur(QWidget):
     def __init__(self, rows=10, cols=10, mines=15):
@@ -9,11 +9,13 @@ class Demineur(QWidget):
         self.rows = rows
         self.cols = cols
         self.mines = mines
+        self.letTimer = 1
         self.grid = [[0 for _ in range(cols)] for _ in range(rows)]
         self.buttons = [[None for _ in range(cols)] for _ in range(rows)]
         self.mines_positions = set()
         self.flags = set()
-        
+        self.timer = QTimer()
+        self.time_elapsed = 0
         self.initUI()
         self.place_mines()
         self.calculate_numbers()
@@ -21,6 +23,10 @@ class Demineur(QWidget):
     def initUI(self):
         main_layout = QVBoxLayout()
         grid_layout = QGridLayout()
+        
+        self.timer_label = QLabel("Temps: 0s")
+        self.timer.timeout.connect(self.update_timer)
+        self.timer.start(1000)
         
         for i in range(self.rows):
             for j in range(self.cols):
@@ -35,12 +41,36 @@ class Demineur(QWidget):
         self.help_button = QPushButton("Aide IA")
         self.help_button.clicked.connect(self.ai_help)
         
+        self.restart_button = QPushButton("Rejouer")
+        self.restart_button.clicked.connect(self.restart_game)
+        
+        main_layout.addWidget(self.timer_label)
         main_layout.addLayout(grid_layout)
         main_layout.addWidget(self.help_button)
+        main_layout.addWidget(self.restart_button)
         
         self.setLayout(main_layout)
         self.setWindowTitle("Démineur")
         self.show()
+    
+    def update_timer(self):
+        if self.letTimer:
+            self.time_elapsed += 1
+            self.timer_label.setText(f"Temps: {self.time_elapsed}s")
+    
+    def restart_game(self):
+        self.time_elapsed = 0
+        self.timer_label.setText("Temps: 0s")
+        self.mines_positions.clear()
+        self.flags.clear()
+        self.grid = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
+        for i in range(self.rows):
+            for j in range(self.cols):
+                self.buttons[i][j].setText(" ")
+                self.buttons[i][j].setEnabled(True)
+                self.buttons[i][j].setStyleSheet("")
+        self.place_mines()
+        self.calculate_numbers()
     
     def place_mines(self):
         count = 0
@@ -102,9 +132,10 @@ class Demineur(QWidget):
         for x, y in self.mines_positions:
             self.buttons[x][y].setText("💣")
         
+        self.letTimer = 0
         msg = QMessageBox()
         msg.setWindowTitle("Fin du jeu")
-        msg.setText("Bravo, vous avez gagné !" if won else "Dommage, vous avez perdu !")
+        msg.setText(f"Bravo, vous avez gagné !\nTemps : {self.time_elapsed}s" if won else "Dommage, vous avez perdu !")
         msg.exec()
         self.close()
     
