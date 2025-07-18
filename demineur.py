@@ -6,7 +6,7 @@ from PyQt6.QtCore import Qt, QTimer
 class Demineur(QWidget):
     def __init__(self, rows=10, cols=10, mines=15):
         super().__init__()
-        self.rows = rows
+        self.rows = rows   
         self.cols = cols
         self.mines = mines
         self.letTimer = 1
